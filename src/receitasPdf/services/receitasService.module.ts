@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from 'src/shared/database/database.module';
 import { ReceitasController } from '../controller/receitas.controller';
-import { GetReceitaByIdService } from './getReceitasPdf/service/getReceitaByIdService';
-import { GetReceitaByIdRepository } from './getReceitasPdf/repository/getReceitaById.repository';
+import { GetLaudoByIdService } from './getReceitasPdf/service/getReceitaByIdService';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, HttpModule],
   controllers: [ReceitasController],
-  providers: [GetReceitaByIdService, GetReceitaByIdRepository],
+  providers: [GetLaudoByIdService],
 })
 export class ReceitasServiceModule {}

@@ -1,34 +1,23 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
-import { Response } from 'express';
-import * as archiver from 'archiver';
-import { GetReceitaByIdService } from '../services/getReceitasPdf/service/getReceitaByIdService';
-import { GetReceitaByIdInputDto } from '../services/getReceitasPdf/dto/getReceitaByIdInput.dto';
+import { Body, Controller, Post, StreamableFile } from '@nestjs/common';
+import { GetLaudosInputDto } from '../services/getReceitasPdf/dto/getReceitaByIdInput.dto';
+import { GetLaudoByIdService } from '../services/getReceitasPdf/service/getReceitaByIdService';
+import { Readable } from 'stream';
 
 @Controller('receitas')
 export class ReceitasController {
-  constructor(private readonly getReceitaByIdService: GetReceitaByIdService) {}
+  constructor(private readonly getLaudoByIdService: GetLaudoByIdService) {}
 
-  @Get()
-  async getReceitasPdf(
-    @Query() data: GetReceitaByIdInputDto,
-    @Res() response: Response,
-  ) {
-    const receitas = await this.getReceitaByIdService.execute(data);
+  @Post()
+  async getLaudosPdf(@Body() dto: GetLaudosInputDto): Promise<StreamableFile> {
+    const pdfBuffer = await this.getLaudoByIdService.execute(dto);
 
-    response.setHeader('Content-Type', 'application/zip');
-    response.setHeader(
-      'Content-Disposition',
-      'attachment; filename="receitas.zip"',
-    );
+    const stream = new Readable();
+    stream.push(pdfBuffer);
+    stream.push(null);
 
-    const archive = archiver('zip', { zlib: { level: 9 } });
-
-    archive.pipe(response);
-
-    receitas.forEach((buffer, index) => {
-      archive.append(buffer, { name: `laudo_${index + 1}.pdf` });
+    return new StreamableFile(stream, {
+      type: 'application/pdf',
+      disposition: 'inline; filename="laudo.pdf"',
     });
-
-    await archive.finalize();
   }
 }
