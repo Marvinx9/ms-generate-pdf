@@ -167,9 +167,7 @@ import {
 import * as PDFDocument from 'pdfkit';
 import { GetLaudosInputDto, Laudos } from '../dto/getReceitaByIdInput.dto';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-import * as FormData from 'form-data';
-import { Readable } from 'stream';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class GetLaudoByIdService {
@@ -211,7 +209,7 @@ export class GetLaudoByIdService {
         doc.on('end', async () => {
           const pdfBuffer = Buffer.concat(buffers);
 
-          await this.sendPdfToExternalApi(pdfBuffer, data.email);
+          // await this.sendPdfToApi(pdfBuffer);
 
           resolve(pdfBuffer);
         });
@@ -222,32 +220,48 @@ export class GetLaudoByIdService {
     }
   }
 
-  //forma 1
-  private async sendPdfToExternalApi(
-    pdfBuffer: Buffer,
-    email: string,
-  ): Promise<void> {
-    const url = 'https://api.externa.com/send-pdf';
-
-    const formData = new FormData();
-
-    const stream = new Readable();
-    stream.push(pdfBuffer);
-    stream.push(null);
-
-    formData.append('file', stream, 'laudo.pdf');
-    formData.append('recipient', email);
-
-    const headers = {
-      ...formData.getHeaders(),
-      Authorization: 'Bearer YOUR_API_KEY',
-    };
-
-    const response = await firstValueFrom(
-      this.httpService.post(url, formData, { headers }),
-    );
-    this.logger.log('PDF enviado com sucesso!', response.data);
+  private async sendPdfToApi(pdfBuffer: Buffer) {
+    try {
+      const response = await lastValueFrom(
+        this.httpService.post('https://sua-api.com/upload', pdfBuffer, {
+          headers: {
+            'Content-Type': 'application/pdf',
+          },
+        }),
+      );
+      this.logger.log('PDF enviado com sucesso:', response.data);
+    } catch (error) {
+      this.logger.error('Erro ao enviar PDF para a API:', error);
+      throw new InternalServerErrorException('Erro ao enviar PDF para a API');
+    }
   }
+
+  //forma 1
+  // private async sendPdfToExternalApi(
+  //   pdfBuffer: Buffer,
+  //   email: string,
+  // ): Promise<void> {
+  //   const url = 'https://api.externa.com/send-pdf';
+
+  //   const formData = new FormData();
+
+  //   const stream = new Readable();
+  //   stream.push(pdfBuffer);
+  //   stream.push(null);
+
+  //   formData.append('file', stream, 'laudo.pdf');
+  //   formData.append('recipient', email);
+
+  //   const headers = {
+  //     ...formData.getHeaders(),
+  //     Authorization: 'Bearer YOUR_API_KEY',
+  //   };
+
+  //   const response = await firstValueFrom(
+  //     this.httpService.post(url, formData, { headers }),
+  //   );
+  //   this.logger.log('PDF enviado com sucesso!', response.data);
+  // }
 
   // forma 2
   // private async sendPdfToExternalApi(
@@ -298,10 +312,19 @@ export class GetLaudoByIdService {
       doc.fontSize(12).text(data.content, { align: 'justify' });
       doc.moveDown(2);
 
-      doc.text(`______________${data.assinatura}_____________`, {
+      const pageHeight = doc.page.height;
+
+      doc.text(
+        `______________${data.assinatura}_____________`,
+        0,
+        pageHeight - 100,
+        {
+          align: 'right',
+        },
+      );
+      doc.text('Assinatura do Médico', 0, pageHeight - 80, {
         align: 'right',
       });
-      doc.text('Assinatura do Médico', { align: 'right' });
       doc.moveDown(3);
     });
   }
@@ -335,10 +358,19 @@ export class GetLaudoByIdService {
       doc.fontSize(14).text(textoAtestado, { align: 'justify' });
       doc.moveDown(2);
 
-      doc.text(`______________${data.assinatura}_____________`, {
+      const pageHeight = doc.page.height;
+
+      doc.text(
+        `______________${data.assinatura}_____________`,
+        0,
+        pageHeight - 100,
+        {
+          align: 'right',
+        },
+      );
+      doc.text('Assinatura do Médico', 0, pageHeight - 80, {
         align: 'right',
       });
-      doc.text('Assinatura do Médico', { align: 'right' });
       doc.moveDown(3);
     });
   }
@@ -370,10 +402,19 @@ export class GetLaudoByIdService {
       doc.fontSize(12).text(data.content, { align: 'justify' });
       doc.moveDown(2);
 
-      doc.text(`______________${data.assinatura}_____________`, {
+      const pageHeight = doc.page.height;
+
+      doc.text(
+        `______________${data.assinatura}_____________`,
+        0,
+        pageHeight - 100,
+        {
+          align: 'right',
+        },
+      );
+      doc.text('Assinatura do Médico', 0, pageHeight - 80, {
         align: 'right',
       });
-      doc.text('Assinatura do Médico', { align: 'right' });
       doc.moveDown(3);
     });
   }
